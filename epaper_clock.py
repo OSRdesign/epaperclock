@@ -3,12 +3,12 @@ import sys
 import os
 import time
 from datetime import datetime
-from waveshare_epd import epd2in13_V3
+from waveshare_epd import epd2in13_V2
 from PIL import Image, ImageDraw, ImageFont
 
 class EpaperClock:
     def __init__(self):
-        self.epd = epd2in13_V3.EPD()
+        self.epd = epd2in13_V2.EPD()
         self.width = self.epd.height  # Note: rotation makes width = height
         self.height = self.epd.width  # and height = width
         self.font_path = self._get_font_path()
@@ -30,7 +30,7 @@ class EpaperClock:
     def initialize(self):
         """Initialize the e-Paper display"""
         try:
-            self.epd.init(self.epd.FULL_UPDATE)
+            self.epd.init()
             self.epd.Clear(0xFF)  # Clear to white
         except Exception as e:
             print(f"Error initializing display: {e}")
@@ -68,19 +68,21 @@ class EpaperClock:
         """Main loop to update the display"""
         while True:
             try:
-                # Partial update for smoother refresh
-                self.epd.init(self.epd.PART_UPDATE)
+                # Initialize for partial update
+                self.epd.init()
+                self.epd.displayPartBaseImage(self.epd.getbuffer(self.create_time_image()))
                 
-                # Create and display the time image
-                time_image = self.create_time_image()
-                self.epd.display_Partial(self.epd.getbuffer(time_image))
-                
-                # Wait for a second before next update
-                time.sleep(1)
+                while True:
+                    # Create and display the time image
+                    time_image = self.create_time_image()
+                    self.epd.displayPartial(self.epd.getbuffer(time_image))
+                    
+                    # Wait for a second before next update
+                    time.sleep(1)
                 
             except KeyboardInterrupt:
                 print("Cleaning up...")
-                self.epd.init(self.epd.FULL_UPDATE)
+                self.epd.init()
                 self.epd.Clear(0xFF)
                 self.epd.sleep()
                 break
