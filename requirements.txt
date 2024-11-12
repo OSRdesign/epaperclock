@@ -1,4 +1,4 @@
 RPi.GPIO>=0.7.0
 spidev>=3.5
 Pillow>=9.0.0
-waveshare-epaper>=1.0.0
+waveshare-epd>=0.2.0

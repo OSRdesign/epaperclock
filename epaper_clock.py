@@ -3,16 +3,32 @@ import sys
 import os
 import time
 from datetime import datetime
-from waveshare_epaper import epd2in13_V2
+from waveshare_epd import epd2in13_V3
 from PIL import Image, ImageDraw, ImageFont
 
 class EpaperClock:
     def __init__(self):
-        self.epd = epd2in13_V2.EPD()
+        self.epd = epd2in13_V3.EPD()
         self.width = self.epd.height  # Note: rotation makes width = height
         self.height = self.epd.width  # and height = width
+        self.font_path = self._get_font_path()
+        
+    def _get_font_path(self):
+        """Get the appropriate font path based on system"""
+        common_paths = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',  # Debian/Ubuntu
+            '/usr/share/fonts/TTF/DejaVuSans.ttf',              # Arch Linux
+            '/usr/share/fonts/dejavu/DejaVuSans.ttf'            # Fedora
+        ]
+        
+        for path in common_paths:
+            if os.path.exists(path):
+                return path
+                
+        raise FileNotFoundError("Could not find DejaVuSans font. Please install dejavu-fonts package.")
         
     def initialize(self):
+        """Initialize the e-Paper display"""
         try:
             self.epd.init(self.epd.FULL_UPDATE)
             self.epd.Clear(0xFF)  # Clear to white
@@ -21,13 +37,14 @@ class EpaperClock:
             sys.exit(1)
 
     def create_time_image(self):
+        """Create an image with the current time and date"""
         # Create new image with white background
         image = Image.new('1', (self.width, self.height), 255)
         draw = ImageDraw.Draw(image)
         
-        # Load a font
-        font_time = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 36)
-        font_date = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 16)
+        # Load fonts
+        font_time = ImageFont.truetype(self.font_path, 36)
+        font_date = ImageFont.truetype(self.font_path, 16)
         
         # Get current time and date
         now = datetime.now()
@@ -48,6 +65,7 @@ class EpaperClock:
         return image
 
     def update_display(self):
+        """Main loop to update the display"""
         while True:
             try:
                 # Partial update for smoother refresh
@@ -72,6 +90,7 @@ class EpaperClock:
                 sys.exit(1)
 
 def main():
+    """Main entry point of the application"""
     try:
         clock = EpaperClock()
         clock.initialize()
